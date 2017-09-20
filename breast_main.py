@@ -49,11 +49,11 @@ if __name__ == '__main__':
 
     # (X_test, y_test, predicts) = run_unet_gen(istrain=False)  # dice = 86.5
 
-    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448(istrain=False)  # dice = 86.4
+    (X_test, y_test, predicts) = run_unet_reg_gen_448_448(istrain=True)  # dice = 86.4
 
-    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_echo(istrain=False)  # dice =
+    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_echo(istrain=False)  # dice = 80.25
 
-    (X_test, y_test, predicts) = run_unet_reg_gen_448_448_padecho(istrain=True)  # dice =
+    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_padecho(istrain=False)  # dice = 80.1
 
     print("total process time: %s" % cvtSecond2HMS(time.clock() - ts))
 

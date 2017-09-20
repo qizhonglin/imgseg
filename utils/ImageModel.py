@@ -443,7 +443,6 @@ class ResNet50(ImageModel):
         model.summary()
         return model
 
-
 class DenseNet(ImageModel):
     def __init__(self, input_shape):
         self.input_shape = input_shape

@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 import keras
 
 import matplotlib.pyplot as plt
@@ -18,7 +18,7 @@ from utils.ImageModel import *
 from utils import showImages, print_env, cvtSecond2HMS, mkdirInCache, elastic_transform_keras
 from utils.metrics import Metrics
 from SkinData import SkinData
-from DataSetVolumn import DataSetVolumn
+from DataSetVolumn import DataSetVolumn, TumorVolumn
 from BreastData import BreastData
 
 seed = 9001
@@ -43,14 +43,17 @@ class Segmentation(object):
         print('-' * 30)
         model = ImageModel.compile(model)
 
-        checkpoint = ModelCheckpoint(self.modelcheckpoint, monitor='val_loss', verbose=1, save_best_only=True)
+        callbacks = [
+            ModelCheckpoint(self.modelcheckpoint, monitor='val_loss', verbose=1, save_best_only=True),
+            EarlyStopping(monitor='val_loss', patience=100, verbose=1)
+        ]
 
         print('-' * 30)
         print('Fitting model...')
         print('-' * 30)
         if not is_datagen:
             model.fit(images, mask, batch_size=batch_size, nb_epoch=nb_epoch, verbose=1, shuffle=True,
-                  validation_data=validation_data, callbacks=[checkpoint])
+                  validation_data=validation_data, callbacks=callbacks)
         else:
             data_gen_args = dict(featurewise_center=False,
                                  featurewise_std_normalization=False,
@@ -69,7 +72,7 @@ class Segmentation(object):
             train_generator = izip(image_generator, mask_generator)
 
             model.fit_generator(train_generator, steps_per_epoch=len(images)/batch_size, epochs=nb_epoch,
-                  validation_data=validation_data, callbacks=[checkpoint])
+                  validation_data=validation_data, callbacks=callbacks)
 
         self.model = model
 
@@ -136,9 +139,9 @@ class Segmentation(object):
 
     @staticmethod
     def run_liver(istrain, model_name, modelcheckpoint, model_pretrain=None,
-            batch_size=1, nb_epoch=500, is_datagen=False):
+            batch_size=1, nb_epoch=500, is_datagen=False, isliver=True):
 
-        reader = DataSetVolumn()
+        reader = DataSetVolumn() if isliver else TumorVolumn()
         seg = Segmentation(model_name, modelcheckpoint)
 
         if istrain:
@@ -154,14 +157,14 @@ class Segmentation(object):
             X_test, y_test = data
             predicts = seg.predict(X_test, batch_size=batch_size)
 
-            def save():
+            def save(liver):
                 volumefile = 'volumn-' + imagefile.split('-')[1] + '.npy'
                 maskfile = 'segmentation-' + imagefile.split('-')[1] + '.npy'
                 predictfile = 'predict-' + imagefile.split('-')[1] + '.npy'
-                np.save(os.path.join('cache/liver/result', volumefile), X_test)
-                np.save(os.path.join('cache/liver/result', maskfile), y_test)
-                np.save(os.path.join('cache/liver/result', predictfile), predicts)
-            #save()
+                np.save(os.path.join('cache/{0}/result'.format(liver), volumefile), X_test)
+                np.save(os.path.join('cache/{0}/result'.format(liver), maskfile), y_test)
+                np.save(os.path.join('cache/{0}/result'.format(liver), predictfile), predicts)
+            # save('liver') if isliver else save('tumor')
             pprint(Metrics.all(y_test, predicts))
             metrics_testdata.append((imagefile, Metrics.all(y_test, predicts)))
 
@@ -194,7 +197,10 @@ class SegmentationBatch(Segmentation):
         print('-' * 30)
         model = ImageModel.compile(model)
 
-        checkpoint = ModelCheckpoint(self.modelcheckpoint, monitor='val_loss', verbose=1, save_best_only=True)
+        callbacks = [
+            ModelCheckpoint(self.modelcheckpoint, monitor='val_loss', verbose=1, save_best_only=True),
+            EarlyStopping(monitor='val_loss', patience=10, verbose=1)
+        ]
 
         print('-' * 30)
         print('Fitting model...')
@@ -208,7 +214,7 @@ class SegmentationBatch(Segmentation):
             for i in range(len(file_dict)):
                 images, masks = data.flow_all_memory(i, file_dict, channel)
                 model.fit(images, masks, batch_size=batch_size, nb_epoch=1, verbose=1, shuffle=True,
-                      validation_data=validation_data, callbacks=[checkpoint])
+                      validation_data=validation_data, callbacks=callbacks)
 
         self.model = model
 

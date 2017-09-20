@@ -7,12 +7,13 @@ seed = 9001
 random.seed(seed)
 
 
-def run_unet(istrain=False):
+def run_unet(istrain=False, tissue='liver'):
     return Segmentation.run_liver(istrain=istrain,
                                   model_name='unet',
-                                  modelcheckpoint='cache/liver/model/unet.hdf5',
+                                  modelcheckpoint='cache/{0}/model/unet.hdf5'.format(tissue),
                                   batch_size=8,
-                                  nb_epoch=20)
+                                  nb_epoch=20,
+                                  isliver=True if tissue=='liver' else False)
 
 def run_unet_25D(istrain=False):
     return SegmentationBatch.run_liver(istrain=istrain,
@@ -22,14 +23,34 @@ def run_unet_25D(istrain=False):
                                        nb_epoch=20,
                                        channel=5)
 
+def run_unet_reg_25D(istrain=False):
+    return SegmentationBatch.run_liver(istrain=istrain,
+                                       model_name='unet_reg',
+                                       modelcheckpoint='cache/liver/model/unet_reg_25D.hdf5',
+                                       batch_size=4,
+                                       nb_epoch=20,
+                                       channel=5)
+
+def run_unet_standard_25D(istrain=False):
+    return SegmentationBatch.run_liver(istrain=istrain,
+                                       model_name='unet_standard',
+                                       modelcheckpoint='cache/liver/model/unet_standard_25D.hdf5',
+                                       batch_size=4,
+                                       nb_epoch=20,
+                                       channel=5)
+
 if __name__ == '__main__':
     # print_env()
 
 
     ts = time.clock()
 
-    # (X_test, y_test, predicts) = run_unet(istrain=False)       # dice = 96.1
-    (X_test, y_test, predicts) = run_unet_25D(istrain=True)  # dice = 90.5
+    # (X_test, y_test, predicts) = run_unet(istrain=True)       # dice = 96.1
+    # (X_test, y_test, predicts) = run_unet_25D(istrain=True)  # dice = 90.5
+    # (X_test, y_test, predicts) = run_unet_reg_25D(istrain=True)  # dice = 89.6
+    # (X_test, y_test, predicts) = run_unet_standard_25D(istrain=False)  # dice = 88.7
+
+    (X_test, y_test, predicts) = run_unet(istrain=True, tissue='tumor')  # dice =
 
     print("total process time: ", cvtSecond2HMS(time.clock() - ts))
     #

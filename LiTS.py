@@ -246,8 +246,8 @@ class Result(object):
 
 class Liver2Tumor(Result):
     def __init__(self,
-                 src_dir='/home/qzlin/.keras/datasets/LiTS/liver',
-                 dst_dir='/home/qzlin/.keras/datasets/LiTS/tumor'):
+                 src_dir='/home/philips/.keras/datasets/LiTS/liver',
+                 dst_dir='/home/philips/.keras/datasets/LiTS/tumor'):
         self.src_dir = src_dir
         self.dst_dir = dst_dir
 
@@ -268,7 +268,6 @@ class Liver2Tumor(Result):
 
     def crop_liver(self):
         for i, index in enumerate(self.indexs):
-            if i < 15: continue
             imagefile = os.path.join(self.src_dir, self.images_file[i])
             maskfile = os.path.join(self.src_dir, self.masks_file[i])
             liverfile = os.path.join(self.dst_dir, 'volumn-{0}.npy'.format(index))
@@ -286,6 +285,27 @@ class Liver2Tumor(Result):
             np.save(liverfile, liver)
             np.save(livermaskfile, liver_mask)
             np.save(boxfile, boxs)
+
+    def reformat_channel(self):
+        def swapaxes(imagefile, imagefile_new):
+            image = np.load(imagefile)
+            image = np.swapaxes(image, 1, 3)
+            np.save(imagefile_new, image)
+
+        for i, index in enumerate(self.indexs):
+            imagefile = os.path.join(self.src_dir, self.images_file[i])
+            maskfile = os.path.join(self.src_dir, self.masks_file[i])
+
+            imagefile_new = os.path.join(self.src_dir, 'volumn-{0}.npy'.format(index))
+            maskfile_new = os.path.join(self.src_dir, 'segmentation-{0}.npy'.format(index))
+
+            swapaxes(imagefile, imagefile_new)
+            swapaxes(maskfile, maskfile_new)
+
+    def remove_src(self):
+        images_file = [image_file for image_file in os.listdir(self.src_dir) if 'mask' in image_file]
+        [os.remove(os.path.join(self.src_dir, imagefile)) for imagefile in images_file]
+        print(images_file)
 
 
 

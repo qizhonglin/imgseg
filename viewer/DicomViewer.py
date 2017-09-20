@@ -60,7 +60,7 @@ class DicomViewer():
         data = vtk.vtkImageShiftScale()
         data.SetInputConnection(reader.GetOutputPort())
         data.SetShift(-1.0 * min)
-        data.SetScale(255.0 / (max - min))
+        data.SetScale(255.0 / (max - min + 0.00001))
         data.SetOutputScalarTypeToUnsignedChar()
         return data
 
