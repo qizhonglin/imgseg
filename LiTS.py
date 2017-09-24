@@ -268,6 +268,7 @@ class Liver2Tumor(Result):
 
     def crop_liver(self):
         for i, index in enumerate(self.indexs):
+            print('processing case {0}/{1} is {2}'.format(i, len(self.indexs), self.images_file[i]))
             imagefile = os.path.join(self.src_dir, self.images_file[i])
             maskfile = os.path.join(self.src_dir, self.masks_file[i])
             liverfile = os.path.join(self.dst_dir, 'volumn-{0}.npy'.format(index))

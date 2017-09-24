@@ -14,6 +14,7 @@ import numpy as np
 from keras.applications.vgg16 import *
 
 from resnet_helpers import *
+from densenet_helpers import create_fcn_densenet
 
 class ImageModel(object):
     def __init__(self):
@@ -449,17 +450,25 @@ class DenseNet(ImageModel):
         super(DenseNet, self).__init__()
 
     def get_model(self):
-        model = densenet.DenseNetFCN(input_shape=self.input_shape,
-                                     nb_dense_block=3,
-                                     nb_layers_per_block=2,
-                                     init_conv_filters=32,
-                                     upsampling_conv=32,
-                                     activation='sigmoid'
-                                     )
+        # model = densenet.DenseNetFCN(input_shape=self.input_shape,
+        #                              nb_dense_block=3,
+        #                              nb_layers_per_block=2,
+        #                              init_conv_filters=32,
+        #                              upsampling_conv=32,
+        #                              activation='sigmoid'
+        #                              )
+        # model = densenet.DenseNetFCN(input_shape=self.input_shape)
+        inputs = Input(self.input_shape)
+
+        x = create_fcn_densenet(inputs, nb_layers_per_block=[4, 5, 7, 10, 12, 15])
+
+        model = Model(inputs, x)
 
         model.summary()
         return model
 
 if __name__ == '__main__':
     # FCN.transfer_FCN_Vgg16()
-    unet((224, 224, 1)).transfer_pretrain()
+    # unet((224, 224, 1)).transfer_pretrain()
+    # ResNet50((32, 32, 1)).get_model()
+    DenseNet((32, 32, 1)).get_model()
