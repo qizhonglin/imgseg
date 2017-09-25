@@ -45,7 +45,7 @@ class Segmentation(object):
 
         callbacks = [
             ModelCheckpoint(self.modelcheckpoint, monitor='val_loss', verbose=1, save_best_only=True),
-            EarlyStopping(monitor='val_loss', patience=100, verbose=1)
+            EarlyStopping(monitor='val_loss', patience=50, verbose=1)
         ]
 
         print('-' * 30)

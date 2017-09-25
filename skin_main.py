@@ -34,7 +34,7 @@ def run_DenseNet(istrain=False):
     return Segmentation.run_skin(istrain=istrain,
                             model_name='DenseNet',
                             modelcheckpoint='cache/skin/model/densenet.hdf5',
-                            batch_size=16)
+                            batch_size=4)
 
 def run_unet_gen(istrain=False):
     return Segmentation.run_skin(istrain=istrain,
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     ts = time.clock()
 
-    # (X_test, y_test, predicts) = run_unet()                             # dice = 84.9       85.8
+    (X_test, y_test, predicts) = run_unet(istrain=True)                             # dice = 84.9       85.8
     # (X_test, y_test, predicts) = run_FCN(istrain=True)                  # dice = 71.4
     # (X_test, y_test, predicts) = run_ResNet50(istrain=False)            # dice = 80
     # (X_test, y_test, predicts) = run_DenseNet(istrain=True)               # dice = 82.3
@@ -62,15 +62,15 @@ if __name__ == '__main__':
     # unet + data augment
     # (X_test, y_test, predicts) = run_unet_gen(istrain=True)           # dice= 86.8
 
-    (X_test, y_test, predicts) = run_unet_standard_gen(istrain=True)    # dice = 87.4
+    # (X_test, y_test, predicts) = run_unet_standard_gen(istrain=True)    # dice = 87.4
 
     print("total process time: %s" % cvtSecond2HMS(time.clock() - ts))
 
-    for i in range(0, 1):
-        showImages(X_test[i, :, :, 0], y_test[i, :, :, 0], predicts[i, :, :, 0])
-
-    # for (image, mask, predict) in zip(X_test, y_test, predicts):
-    #     seg.show(image[0, :, :], mask[0, :, :], predict[0, :, :])
-
-    plt.show()
+    # for i in range(0, 1):
+    #     showImages(X_test[i, :, :, 0], y_test[i, :, :, 0], predicts[i, :, :, 0])
+    #
+    # # for (image, mask, predict) in zip(X_test, y_test, predicts):
+    # #     seg.show(image[0, :, :], mask[0, :, :], predict[0, :, :])
+    #
+    # plt.show()
 

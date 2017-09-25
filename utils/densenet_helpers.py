@@ -2,22 +2,13 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 
-import warnings
-
-from keras.models import Model
 from keras.layers.core import Dense, Dropout, Activation, Reshape
 from keras.layers.convolutional import Conv2D, Conv2DTranspose, UpSampling2D
 from keras.layers.pooling import AveragePooling2D
 from keras.layers.pooling import MaxPooling2D
-from keras.layers.pooling import GlobalAveragePooling2D
-from keras.layers import Input
 from keras.layers.merge import concatenate
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
-from keras.utils.layer_utils import convert_all_kernels_in_model
-from keras.utils.data_utils import get_file
-from keras.engine.topology import get_source_inputs
-from keras.applications.imagenet_utils import _obtain_input_shape
 import keras.backend as K
 
 def create_fcn_densenet(img_input, nb_dense_block=5, growth_rate=16,
@@ -253,18 +244,18 @@ def __transition_up_block(ip, nb_filters, type='upsampling',
 
     if type == 'upsampling':
         x = UpSampling2D()(ip)
-    elif type == 'subpixel':
-        x = Conv2D(nb_filters, (3, 3), activation='relu', padding='same',
-                   kernel_regularizer=l2(weight_decay),
-                   use_bias=False, kernel_initializer='he_uniform')(ip)
-        x = SubPixelUpscaling(scale_factor=2)(x)
-        x = Conv2D(nb_filters, (3, 3), activation='relu', padding='same',
-                   kernel_regularizer=l2(weight_decay),
-                   use_bias=False, kernel_initializer='he_uniform')(x)
-    else:
-        x = Conv2DTranspose(nb_filters, (3, 3), output_shape,
-                            activation='relu', padding='same',
-                            subsample=(2, 2),
-                            kernel_initializer='he_uniform')(ip)
+    # elif type == 'subpixel':
+    #     x = Conv2D(nb_filters, (3, 3), activation='relu', padding='same',
+    #                kernel_regularizer=l2(weight_decay),
+    #                use_bias=False, kernel_initializer='he_uniform')(ip)
+    #     x = SubPixelUpscaling(scale_factor=2)(x)
+    #     x = Conv2D(nb_filters, (3, 3), activation='relu', padding='same',
+    #                kernel_regularizer=l2(weight_decay),
+    #                use_bias=False, kernel_initializer='he_uniform')(x)
+    # else:
+    #     x = Conv2DTranspose(nb_filters, (3, 3), output_shape,
+    #                         activation='relu', padding='same',
+    #                         subsample=(2, 2),
+    #                         kernel_initializer='he_uniform')(ip)
 
     return x
