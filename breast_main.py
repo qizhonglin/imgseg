@@ -49,9 +49,9 @@ if __name__ == '__main__':
 
     ts = time.clock()
 
-    (X_test, y_test, predicts) = run_unet_gen(istrain=True)  # dice = 86.5
+    # (X_test, y_test, predicts) = run_unet_gen(istrain=False)  # dice = 86.6
 
-    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448(istrain=True)  # dice = 86.4
+    (X_test, y_test, predicts) = run_unet_reg_gen_448_448(istrain=True)  # dice = 86.4
 
     # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_echo(istrain=False)  # dice = 80.25
 

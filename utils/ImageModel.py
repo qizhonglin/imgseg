@@ -3,6 +3,7 @@ from keras.optimizers import Adam, SGD
 from keras.regularizers import l2
 from keras.layers.normalization import BatchNormalization
 from keras.models import model_from_json
+from keras.layers.advanced_activations import PReLU
 
 from BilinearUpSampling import BilinearUpSampling2D
 
@@ -49,7 +50,7 @@ class ImageModel(object):
 
     @staticmethod
     def compile(model):
-        model.compile(optimizer=Adam(lr=1e-5), loss=ImageModel.dice_coef_loss, metrics=[ImageModel.dice_coef])
+        model.compile(optimizer=Adam(lr=1e-4), loss=ImageModel.dice_coef_loss, metrics=[ImageModel.dice_coef])
         return model
 
     # def save_model(self, model):
@@ -110,40 +111,42 @@ class unet(ImageModel):
     def get_model(self):
         inputs = Input(self.input_shape)
 
-        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv1')(inputs)
-        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv2')(conv1)
+        weight_decay = 1e-4
+
+        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv1', W_regularizer=l2(weight_decay))(inputs)
+        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv2', W_regularizer=l2(weight_decay))(conv1)
         pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
 
-        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv1')(pool1)
-        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv2')(conv2)
+        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv1', W_regularizer=l2(weight_decay))(pool1)
+        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv2', W_regularizer=l2(weight_decay))(conv2)
         pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
 
-        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv1')(pool2)
-        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv2')(conv3)
+        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv1', W_regularizer=l2(weight_decay))(pool2)
+        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv2', W_regularizer=l2(weight_decay))(conv3)
         pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
 
-        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv1')(pool3)
-        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv2')(conv4)
+        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv1', W_regularizer=l2(weight_decay))(pool3)
+        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv2', W_regularizer=l2(weight_decay))(conv4)
         pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
 
-        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv1')(pool4)
-        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv2')(conv5)
+        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv1', W_regularizer=l2(weight_decay))(pool4)
+        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv2', W_regularizer=l2(weight_decay))(conv5)
 
         up6 = self.merge_feature_maps(conv5, conv4)
-        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv1')(up6)
-        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv2')(conv6)
+        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv1', W_regularizer=l2(weight_decay))(up6)
+        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv2', W_regularizer=l2(weight_decay))(conv6)
 
         up7 = self.merge_feature_maps(conv6, conv3)
-        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv1')(up7)
-        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv2')(conv7)
+        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv1', W_regularizer=l2(weight_decay))(up7)
+        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv2', W_regularizer=l2(weight_decay))(conv7)
 
         up8 = self.merge_feature_maps(conv7, conv2)
-        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv1')(up8)
-        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv2')(conv8)
+        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv1', W_regularizer=l2(weight_decay))(up8)
+        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv2', W_regularizer=l2(weight_decay))(conv8)
 
         up9 = self.merge_feature_maps(conv8, conv1)
-        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv1')(up9)
-        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv2')(conv9)
+        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv1', W_regularizer=l2(weight_decay))(up9)
+        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv2', W_regularizer=l2(weight_decay))(conv9)
 
         conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(conv9)
 
@@ -459,7 +462,73 @@ class DenseNet(ImageModel):
         model.summary()
         return model
 
+class unet_tumor(ImageModel):
+    def __init__(self, input_shape):
+        self.input_shape = input_shape
+        super(unet_tumor, self).__init__()
 
+    def get_model(self):
+        inputs = Input(self.input_shape)
+
+        weight_decay = 1e-4
+
+        conv1 = Convolution2D(32, 3, 3, border_mode='same', name='block1_conv1', W_regularizer=l2(weight_decay))(inputs)
+        conv1 = PReLU()(conv1)
+        conv1 = Convolution2D(32, 3, 3, border_mode='same', name='block1_conv2', W_regularizer=l2(weight_decay))(conv1)
+        conv1 = PReLU()(conv1)
+        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+
+        conv2 = Convolution2D(64, 3, 3, border_mode='same', name='block2_conv1', W_regularizer=l2(weight_decay))(pool1)
+        conv2 = PReLU()(conv2)
+        conv2 = Convolution2D(64, 3, 3, border_mode='same', name='block2_conv2', W_regularizer=l2(weight_decay))(conv2)
+        conv2 = PReLU()(conv2)
+        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+
+        conv3 = Convolution2D(128, 3, 3, border_mode='same', name='block3_conv1', W_regularizer=l2(weight_decay))(pool2)
+        conv3 = PReLU()(conv3)
+        conv3 = Convolution2D(128, 3, 3, border_mode='same', name='block3_conv2', W_regularizer=l2(weight_decay))(conv3)
+        conv3 = PReLU()(conv3)
+        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
+
+        conv4 = Convolution2D(256, 3, 3, border_mode='same', name='block4_conv1', W_regularizer=l2(weight_decay))(pool3)
+        conv4 = PReLU()(conv4)
+        conv4 = Convolution2D(256, 3, 3, border_mode='same', name='block4_conv2', W_regularizer=l2(weight_decay))(conv4)
+        conv4 = PReLU()(conv4)
+        pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
+
+        conv5 = Convolution2D(512, 3, 3, border_mode='same', name='block5_conv1', W_regularizer=l2(weight_decay))(pool4)
+        conv5 = PReLU()(conv5)
+        conv5 = Convolution2D(512, 3, 3, border_mode='same', name='block5_conv2', W_regularizer=l2(weight_decay))(conv5)
+        conv5 = PReLU()(conv5)
+
+        up6 = self.merge_feature_maps(conv5, conv4)
+        conv6 = Convolution2D(256, 3, 3, border_mode='same', name='block6_conv1', W_regularizer=l2(weight_decay))(up6)
+        conv6 = PReLU()(conv6)
+        conv6 = Convolution2D(256, 3, 3, border_mode='same', name='block6_conv2', W_regularizer=l2(weight_decay))(conv6)
+        conv6 = PReLU()(conv6)
+
+        up7 = self.merge_feature_maps(conv6, conv3)
+        conv7 = Convolution2D(128, 3, 3, border_mode='same', name='block7_conv1', W_regularizer=l2(weight_decay))(up7)
+        conv7 = Convolution2D(128, 3, 3, border_mode='same', name='block7_conv2', W_regularizer=l2(weight_decay))(conv7)
+
+        up8 = self.merge_feature_maps(conv7, conv2)
+        conv8 = Convolution2D(64, 3, 3, border_mode='same', name='block8_conv1', W_regularizer=l2(weight_decay))(up8)
+        conv8 = PReLU()(conv8)
+        conv8 = Convolution2D(64, 3, 3, border_mode='same', name='block8_conv2', W_regularizer=l2(weight_decay))(conv8)
+        conv8 = PReLU()(conv8)
+
+        up9 = self.merge_feature_maps(conv8, conv1)
+        conv9 = Convolution2D(32, 3, 3, border_mode='same', name='block9_conv1', W_regularizer=l2(weight_decay))(up9)
+        conv9 = PReLU()(conv9)
+        conv9 = Convolution2D(32, 3, 3, border_mode='same', name='block9_conv2', W_regularizer=l2(weight_decay))(conv9)
+        conv9 = PReLU()(conv9)
+
+        conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(conv9)
+
+        model = Model(input=inputs, output=conv10)
+
+        model.summary()
+        return model
 
 if __name__ == '__main__':
     # FCN.transfer_FCN_Vgg16()

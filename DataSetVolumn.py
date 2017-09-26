@@ -2,15 +2,16 @@ import os, time
 import numpy as np
 from sklearn.cross_validation import train_test_split
 import keras
+import cv2 as cv
 
-from utils import cvtSecond2HMS, threshold, mkdirInCache
+from utils import cvtSecond2HMS, threshold, mkdirInCache, to_category, norm_images, remove_bg
 from viewer import viewSequence
 
 
 class DataSetVolumn(object):
     def __init__(self, dtype='float32',
-                 data_dir='/home/philips/.keras/datasets/LiTS/liver'):
-        self.image_size = (512, 512)
+                 data_dir='/home/philips/.keras/datasets/LiTS/liver', image_size=(512, 512)):
+        self.image_size = image_size
         self.dtype = dtype
 
         self.data_dir = data_dir
@@ -88,7 +89,8 @@ class DataSetVolumn(object):
 
 #-------------------load all data in memory---------------
     def load_traindata(self):
-        total = np.sum(self.nums_slice)
+        num = len(self.nums_slice)
+        total = np.sum(self.nums_slice[:num])
         self.images = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)
         self.masks = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)
 
@@ -97,13 +99,16 @@ class DataSetVolumn(object):
         print('-' * 30)
         index = 0
         for i, image_file in enumerate(self.images_file_train):
+            if i >= num: break
             print('loading case {0} which is {1}'.format(i, image_file))
-            images_onecase, masks_onecase = self.__read_case(
+            image, mask = self.__read_case(
                 self.images_file_train[i], self.masks_file_train[i])
-            self.images[index:index + len(images_onecase), :, :, :] = images_onecase
-            self.masks[index:index + len(images_onecase), :, :, :] = masks_onecase
-            index = index + len(images_onecase)
+            self.images[index:index + image.shape[0]] = image
+            self.masks[index:index + image.shape[0]] = mask
+            index = index + image.shape[0]
         print('Done: {0} - {1} images'.format(i + 1, self.images.shape[0]))
+
+        self.images, self.masks = remove_bg(self.images, self.masks)
 
         return self.images, self.masks
 
@@ -157,8 +162,17 @@ class DataSetVolumn(object):
         mask_path = os.path.join(self.data_dir, mask_file)
         images = self._load_image(image_path)
         masks = self._load_image(mask_path)
+        if self.image_size is not (512, 512):
+            images = self.__resize(images)
+            masks = to_category(self.__resize(masks))
         images, masks = self.preprocess(images, masks)
         return images, masks
+
+    def __resize(self, images):
+        images_new = np.zeros((images.shape[0], self.image_size[0], self.image_size[1], 1), dtype=images.dtype)
+        for i, image in enumerate(images):
+            images_new[i, :, :, 0] = cv.resize(image[:, :, 0], self.image_size)
+        return images_new
 
     def load_testdata(self):
         # self.images_file_test, self.masks_file_test = self.images_file_test[:2], self.masks_file_test[:2]
@@ -176,6 +190,18 @@ class DataSetVolumn(object):
     def validation_data(self):
         images_onecase, masks_onecase = self.__read_case(self.images_file_test[0], self.masks_file_test[0])
         return images_onecase, masks_onecase
+        # test_data = self.load_testdata()
+        # count = 0
+        # for image_file, (image, mask) in test_data.iteritems():
+        #     count = count + image.shape[0]
+        # images = np.zeros((count, image.shape[1], image.shape[2], image.shape[3]), dtype=np.float32)
+        # masks = np.zeros_like(images)
+        # i = 0
+        # for image_file, (image, mask) in test_data.iteritems():
+        #     images[i:i+image.shape[0]] = image
+        #     masks[i:i+mask.shape[0]] = mask
+        #     i = i + image.shape[0]
+        # return images, masks
 
 #-------------------load batch by batch with all memory---------
     def flow_all_memory(self, index, file_dict, channel=5):
@@ -235,24 +261,53 @@ class DataSetVolumn(object):
 
 class TumorVolumn(DataSetVolumn):
     def __init__(self, dtype='float32',
-                 data_dir='/home/philips/.keras/datasets/LiTS/tumor'):
-        super(TumorVolumn, self).__init__(dtype, data_dir)
+                 data_dir='/home/philips/.keras/datasets/LiTS/tumor', image_size=(256, 256)):
+        super(TumorVolumn, self).__init__(dtype, data_dir, image_size)
 
     def preprocess(self, images, masks):
-        images = threshold(images, -100, 400)
+        # images = threshold(images, np.min(images), np.max(images))
+        images = threshold(images, -200, 200)
+        images = norm_images(images)
+        # images = equalizeHist(images)
+        # images = threshold(images, np.min(images), np.max(images))
         # print((np.min(masks), np.max(masks)))
         masks[masks < 2] = 0
         masks /= 2
         # print((np.min(masks), np.max(masks)))
+        # assert np.sum(masks[masks>0]) == np.sum(masks>0)
         return images, masks
+
+    def get_data(self, imagefile):
+        index = imagefile.split('-')[1]
+        index = index.split('.')[0]
+
+        boxs = np.load(os.path.join(self.data_dir, 'box-{0}.npy'.format(index)))
+        images = np.load(os.path.join(self.data_dir, 'volumn-{0}.npy'.format(index)))
+        masks = np.load(os.path.join(self.data_dir, 'segmentation-{0}.npy'.format(index)))
+        return boxs, images, masks
+
+
+
+
+class VolumnViewer(DataSetVolumn):
+    def preprocess(self, images, masks):
+        images = threshold(images, np.min(images), np.max(images))
+        return images, masks
+
+
+
+from viewer import show_image_mask
 
 if __name__ == '__main__':
     # test_data = DataSetVolumn().load_testdata()
     # for image_file, data in test_data.iteritems():
     #     print('{0} has {1} slices and {2} masks'.format(image_file, data[0].shape, data[1].shape))
 
+    # images_onecase, masks_onecase = DataSetVolumn().validation_data()
     images_onecase, masks_onecase = TumorVolumn().validation_data()
+    images_onecase, masks_onecase = remove_bg(images_onecase, masks_onecase)
 
+    # show_image_mask(images_onecase, masks_onecase)
     viewSequence(images_onecase)
     viewSequence(masks_onecase)
     exit()

@@ -54,10 +54,10 @@ if __name__ == '__main__':
 
     ts = time.clock()
 
-    (X_test, y_test, predicts) = run_unet(istrain=True)                             # dice = 84.9       85.8
+    # (X_test, y_test, predicts) = run_unet(istrain=False)                  # dice = 86.9
     # (X_test, y_test, predicts) = run_FCN(istrain=True)                  # dice = 71.4
     # (X_test, y_test, predicts) = run_ResNet50(istrain=False)            # dice = 80
-    # (X_test, y_test, predicts) = run_DenseNet(istrain=True)               # dice = 82.3
+    (X_test, y_test, predicts) = run_DenseNet(istrain=True)               # dice = 82.3
 
     # unet + data augment
     # (X_test, y_test, predicts) = run_unet_gen(istrain=True)           # dice= 86.8

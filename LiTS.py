@@ -10,6 +10,7 @@ from viewer import viewSequence, numpy2vtk
 from viewer.MrViewer import MrViewer
 import matplotlib.pyplot as plt
 from skimage.measure import regionprops
+from utils import to_category
 
 class DataSetVolumnNii(DataSetVolumn):
     def __init__(self, dtype='float32',
@@ -74,24 +75,17 @@ class VolumnCrop(object):
             if max_row > 0 and max_col > 0:
                 liver[i, :, :, 0] = cv.resize(volumn_preprocess[i, min_row: max_row, min_col:max_col, 0], new_size)
                 mask = cv.resize(segmentation[i, min_row: max_row, min_col:max_col, 0], new_size)
-                liver_mask[i, :, :, 0] = self.to_category(mask)
+                liver_mask[i, :, :, 0] = to_category(mask)
         return liver, liver_mask
 
-    @staticmethod
-    def to_category(mask):
-        mask[np.logical_and(0 <= mask, mask < 0.5)] = 0
-        mask[np.logical_and(0.5 <= mask, mask < 1.5)] = 1
-        mask[np.logical_and(1.5 <= mask, mask < 2)] = 2
-        return mask
-
-    def back2noscale(self, boxs, liver_mask):
-        output = np.zeros_like(liver_mask)
-        for i, box in enumerate(boxs):
-            min_row, min_col, max_row, max_col = box
-            if max_row > 0 and max_col > 0:
-                mask = cv.resize(liver_mask[i, :, :, 0], (max_col-min_col, max_row-min_row))
-                output[i, min_row: max_row, min_col:max_col, 0] = self.to_category(mask)
-        return output
+    # def back2noscale(self, boxs, liver_mask):
+    #     output = np.zeros_like(liver_mask)
+    #     for i, box in enumerate(boxs):
+    #         min_row, min_col, max_row, max_col = box
+    #         if max_row > 0 and max_col > 0:
+    #             mask = cv.resize(liver_mask[i, :, :, 0], (max_col-min_col, max_row-min_row))
+    #             output[i, min_row: max_row, min_col:max_col, 0] = to_category(mask)
+    #     return output
 
     def crop_liver(self):
         volumn, segmentation = self.load()
@@ -160,24 +154,24 @@ class VolumnCropTest(object):
             if max_row > 0 and max_col > 0:
                 liver[i, :, :, 0] = cv.resize(volumn_preprocess[i, min_row: max_row, min_col:max_col, 0], new_size)
                 mask = cv.resize(segmentation[i, min_row: max_row, min_col:max_col, 0], new_size)
-                liver_mask[i, :, :, 0] = self.to_category(mask)
+                liver_mask[i, :, :, 0] = to_category(mask)
         return liver, liver_mask
 
-    @staticmethod
-    def to_category(mask):
-        mask[np.logical_and(0 <= mask, mask < 0.5)] = 0
-        mask[np.logical_and(0.5 <= mask, mask < 1.5)] = 1
-        mask[np.logical_and(1.5 <= mask, mask < 2)] = 2
-        return mask
+    # @staticmethod
+    # def to_category(mask):
+    #     mask[np.logical_and(0 <= mask, mask < 0.5)] = 0
+    #     mask[np.logical_and(0.5 <= mask, mask < 1.5)] = 1
+    #     mask[np.logical_and(1.5 <= mask, mask < 2)] = 2
+    #     return mask
 
-    def back2noscale(self, boxs, liver_mask):
-        output = np.zeros_like(liver_mask)
-        for i, box in enumerate(boxs):
-            min_row, min_col, max_row, max_col = box
-            if max_row > 0 and max_col > 0:
-                mask = cv.resize(liver_mask[i, :, :, 0], (max_col-min_col, max_row-min_row))
-                output[i, min_row: max_row, min_col:max_col, 0] = self.to_category(mask)
-        return output
+    # def back2noscale(self, boxs, liver_mask):
+    #     output = np.zeros_like(liver_mask)
+    #     for i, box in enumerate(boxs):
+    #         min_row, min_col, max_row, max_col = box
+    #         if max_row > 0 and max_col > 0:
+    #             mask = cv.resize(liver_mask[i, :, :, 0], (max_col-min_col, max_row-min_row))
+    #             output[i, min_row: max_row, min_col:max_col, 0] = to_category(mask)
+    #     return output
 
     def crop_liver(self):
         volumn, volumn_preprocess, segmentation, predict = self.load()
@@ -242,7 +236,7 @@ class Result(object):
         file = self.get_file(index)
         volumncrop = VolumnCropTest(file)
         liver, liver_mask, boxs = volumncrop.crop_liver()
-        output = volumncrop.back2noscale(boxs, liver_mask)
+        output = back2noscale(boxs, liver_mask)
 
 class Liver2Tumor(Result):
     def __init__(self,

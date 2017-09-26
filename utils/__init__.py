@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import keras
-import cv2
+import cv2 as cv
 
 from theano import function, config, shared, tensor
 import time, os
@@ -42,11 +42,13 @@ def showImages(image, mask=None, predict=None):
 
 def norm_images(images):
     images = images.astype('float32')
-    mean = np.mean(images)  # mean for data centering
-    std = np.std(images)  # std for data normalization
+    for i, image in enumerate(images):
+        mean = np.mean(image)  # mean for data centering
+        std = np.std(image)  # std for data normalization
 
-    images -= mean
-    images /= std
+        image -= mean
+        image /= std
+        images[i] = image
 
     return images
 
@@ -55,6 +57,42 @@ def threshold(images, min_value, max_value):
     images[images > max_value] = 0
     images = (images - min_value) / (max_value - min_value)
     return images
+
+def equalizeHist(images):
+    for i, image in enumerate(images):
+        image = image * 255
+        image = image.astype(np.ubyte)
+        images[i, :, :, 0] = cv.equalizeHist(image[:, :, 0])
+    return images
+
+def to_category(mask):
+    mask[np.logical_and(0 <= mask, mask < 0.5)] = 0
+    mask[np.logical_and(0.5 <= mask, mask < 1.5)] = 1
+    mask[np.logical_and(1.5 <= mask, mask < 2)] = 2
+    return mask
+
+def back2noscale(boxs, liver_mask):
+    output = np.zeros_like(liver_mask)
+    for i, box in enumerate(boxs):
+        min_row, min_col, max_row, max_col = box
+        if max_row > 0 and max_col > 0:
+            mask = cv.resize(liver_mask[i, :, :, 0], (max_col-min_col, max_row-min_row))
+            output[i, min_row: max_row, min_col:max_col, 0] = to_category(mask)
+    return output
+
+
+def remove_bg(images, masks):
+    ob_index = []
+    for i, (image, mask) in enumerate(zip(images, masks)):
+        if np.sum(mask) <= 0: continue
+        ob_index.append(i)
+    total = len(ob_index)
+    images_new = np.zeros((total, images.shape[1], images.shape[2], 1), dtype=images.dtype)
+    masks_new = np.zeros((total, images.shape[1], images.shape[2], 1), dtype=images.dtype)
+    for i, index in enumerate(ob_index):
+        images_new[i] = images[index]
+        masks_new[i] = masks[index]
+    return images_new, masks_new
 
 def cvt1dTo3d(X_train):
     dims = X_train.shape
@@ -102,21 +140,24 @@ def elastic_transform_keras(image):
     res_x = map_coordinates(image[:, :, 0], indices, order=1, mode='reflect').reshape(image.shape)
 
     return res_x
-    # def elastic_transform(image, mask, alpha, sigma, alpha_affine=None, random_state=None):
-    #     if random_state is None:
-    #         random_state = np.random.RandomState(None)
-    #
-    #     shape = image.shape
-    #
-    #     dx = gaussian_filter(random_state.rand(*shape) * 2 - 1, sigma) * alpha
-    #     dy = gaussian_filter(random_state.rand(*shape) * 2 - 1, sigma) * alpha
-    #
-    #     x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
-    #     indices = np.reshape(y+dy, (-1, 1)), np.reshape(x+dx, (-1, 1))
-    #
-    #     res_x = map_coordinates(image, indices, order=1, mode='reflect').shape(shape)
-    #     res_y = map_coordinates(mask, indices, order=1, mode='reflect').shape(shape)
-    #     return res_x, res_y
+
+# def elastic_transform(image, mask, alpha, sigma, alpha_affine=None, random_state=None):
+#     def f(image):
+#         if random_state is None:
+#             random_state = np.random.RandomState(None)
+#
+#         shape = image.shape
+#
+#         dx = gaussian_filter(random_state.rand(*shape) * 2 - 1, sigma) * alpha
+#         dy = gaussian_filter(random_state.rand(*shape) * 2 - 1, sigma) * alpha
+#
+#         x, y = np.meshgrid(np.arange(shape[1]), np.arange(shape[0]))
+#         indices = np.reshape(y+dy, (-1, 1)), np.reshape(x+dx, (-1, 1))
+#
+#         res_x = map_coordinates(image, indices, order=1, mode='reflect').shape(shape)
+#         res_y = map_coordinates(mask, indices, order=1, mode='reflect').shape(shape)
+#         return res_x, res_y
+#     return f
 
 
 

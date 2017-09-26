@@ -15,11 +15,15 @@ from itertools import izip
 from sklearn.utils import class_weight
 
 from utils.ImageModel import *
-from utils import showImages, print_env, cvtSecond2HMS, mkdirInCache, elastic_transform_keras
+from utils import showImages, print_env, cvtSecond2HMS, mkdirInCache, elastic_transform_keras, back2noscale
 from utils.metrics import Metrics
 from SkinData import SkinData
 from DataSetVolumn import DataSetVolumn, TumorVolumn
 from BreastData import BreastData
+
+from utils import to_category
+import cv2 as cv
+from viewer import viewSequence
 
 seed = 9001
 random.seed(seed)
@@ -165,6 +169,22 @@ class Segmentation(object):
                 np.save(os.path.join('cache/{0}/result'.format(liver), maskfile), y_test)
                 np.save(os.path.join('cache/{0}/result'.format(liver), predictfile), predicts)
             # save('liver') if isliver else save('tumor')
+
+            def tumor2noscale(imagefile, predicts):
+                if not isliver:
+                    boxs, images, masks = reader.get_data(imagefile)
+                    masks[masks < 2] = 0
+                    masks /= 2
+                    imagesize = (512, 512)
+                    predicts_new = np.zeros((predicts.shape[0], imagesize[0], imagesize[1], 1), dtype=predicts.dtype)
+                    for i, predict in enumerate(predicts):
+                        predicts_new[i, :, :, 0] = cv.resize(predict[:, :, 0], imagesize)
+                    predicts_new = to_category(predicts_new)
+                    predicts_new = back2noscale(boxs, predicts_new)
+                    # viewSequence(masks)
+                    # viewSequence(predicts_new)
+                    y_test, predicts = masks, predicts_new
+            tumor2noscale(imagefile, predicts)
             pprint(Metrics.all(y_test, predicts))
             metrics_testdata.append((imagefile, Metrics.all(y_test, predicts)))
 
@@ -179,6 +199,8 @@ class Segmentation(object):
         pprint(result)
 
         return (X_test, y_test, predicts)
+
+
 
 
 class SegmentationBatch(Segmentation):
