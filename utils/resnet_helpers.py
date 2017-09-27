@@ -3,7 +3,7 @@ from keras.regularizers import l2
 
 # The original help functions from keras does not have weight regularizers, so I modified them.
 # Also, I changed these two functions into functional style
-def identity_block(kernel_size, filters, stage, block, weight_decay=0., batch_momentum=0.99):
+def identity_block(kernel_size, filters, stage, block, weight_decay=1e-4, batch_momentum=0.9):
     '''The identity_block is the block that has no conv layer at shortcut
     # Arguments
         kernel_size: defualt 3, the kernel size of middle conv layer at main path
@@ -37,7 +37,7 @@ def identity_block(kernel_size, filters, stage, block, weight_decay=0., batch_mo
         return x
     return f
 
-def conv_block(kernel_size, filters, stage, block, weight_decay=0., strides=(2, 2), batch_momentum=0.99):
+def conv_block(kernel_size, filters, stage, block, weight_decay=1e-4, strides=(1, 1), batch_momentum=0.9):
     '''conv_block is the block that has a conv layer at shortcut
     # Arguments
         kernel_size: defualt 3, the kernel size of middle conv layer at main path
@@ -79,7 +79,7 @@ def conv_block(kernel_size, filters, stage, block, weight_decay=0., strides=(2, 
     return f
 
 # Atrous-Convolution version of residual blocks
-def atrous_identity_block(kernel_size, filters, stage, block, weight_decay=0., atrous_rate=(2, 2), batch_momentum=0.99):
+def atrous_identity_block(kernel_size, filters, stage, block, weight_decay=0., atrous_rate=(2, 2), batch_momentum=0.9):
     '''The identity_block is the block that has no conv layer at shortcut
     # Arguments
         kernel_size: defualt 3, the kernel size of middle conv layer at main path
@@ -113,7 +113,7 @@ def atrous_identity_block(kernel_size, filters, stage, block, weight_decay=0., a
         return x
     return f
 
-def atrous_conv_block(kernel_size, filters, stage, block, weight_decay=0., strides=(1, 1), atrous_rate=(2, 2), batch_momentum=0.99):
+def atrous_conv_block(kernel_size, filters, stage, block, weight_decay=0., strides=(1, 1), atrous_rate=(2, 2), batch_momentum=0.9):
     '''conv_block is the block that has a conv layer at shortcut
     # Arguments
         kernel_size: defualt 3, the kernel size of middle conv layer at main path

@@ -108,7 +108,7 @@ class DataSetVolumn(object):
             index = index + image.shape[0]
         print('Done: {0} - {1} images'.format(i + 1, self.images.shape[0]))
 
-        self.images, self.masks = remove_bg(self.images, self.masks)
+        # self.images, self.masks = remove_bg(self.images, self.masks)
 
         return self.images, self.masks
 
@@ -267,7 +267,7 @@ class TumorVolumn(DataSetVolumn):
     def preprocess(self, images, masks):
         # images = threshold(images, np.min(images), np.max(images))
         images = threshold(images, -200, 200)
-        images = norm_images(images)
+        # images = norm_images(images)
         # images = equalizeHist(images)
         # images = threshold(images, np.min(images), np.max(images))
         # print((np.min(masks), np.max(masks)))

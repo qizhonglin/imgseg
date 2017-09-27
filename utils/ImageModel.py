@@ -23,17 +23,20 @@ class ImageModel(object):
 
     # @staticmethod
     # def dice_coef(y_true, y_pred, smooth=1.0):
-    #     y_true = K.reshape(y_true, [-1, 224*224])
-    #     y_pred = K.reshape(y_pred, [-1, 224*224])
+    #     w = 256
+    #     y_true = K.reshape(y_true, [-1, w*w])
+    #     y_pred = K.reshape(y_pred, [-1, w*w])
     #     intersection = K.sum(y_true * y_pred, axis=-1)
     #     return (2. * intersection + smooth) / (K.sum(y_true, axis=-1) + K.sum(y_pred, axis=-1) + smooth)
     #
     # @staticmethod
     # def dice_coef_loss(y_true, y_pred):
     #     cw = [0.534, 7.828]
+    #     w = 256
+    #     cw = [1, 2.2]
     #     # loss = cw[0] * y_true * K.log(y_pred+K.epsilon()) + cw[1] * (1-y_true) * K.log(1-y_pred+K.epsilon())
-    #     y_true = K.reshape(y_true, [-1, 448 * 448])
-    #     y_pred = K.reshape(y_pred, [-1, 448 * 448])
+    #     y_true = K.reshape(y_true, [-1, w * w])
+    #     y_pred = K.reshape(y_pred, [-1, w * w])
     #     loss = cw[0] * y_true * K.log(y_pred+K.epsilon()) + cw[1]*(1-y_true)*K.log(1-y_pred+K.epsilon())
     #     return -K.mean(loss, axis=-1)
 
@@ -50,7 +53,7 @@ class ImageModel(object):
 
     @staticmethod
     def compile(model):
-        model.compile(optimizer=Adam(lr=1e-4), loss=ImageModel.dice_coef_loss, metrics=[ImageModel.dice_coef])
+        model.compile(optimizer=Adam(lr=1e-5), loss=ImageModel.dice_coef_loss, metrics=[ImageModel.dice_coef])
         return model
 
     # def save_model(self, model):
@@ -151,66 +154,6 @@ class unet(ImageModel):
         conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(conv9)
 
         model = Model(input=inputs, output=conv10)
-
-        model.summary()
-        return model
-
-class unet_reg(ImageModel):
-    def __init__(self, input_shape):
-        self.input_shape = input_shape
-        super(unet_reg, self).__init__()
-
-    def get_model(self):
-        inputs = Input(self.input_shape)
-
-        weight_decay = 1e-4
-
-        conv0 = Convolution2D(16, 3, 3, activation='relu', border_mode='same', name='block0_conv1', W_regularizer=l2(weight_decay))(inputs)
-        conv0 = Convolution2D(16, 3, 3, activation='relu', border_mode='same', name='block0_conv2', W_regularizer=l2(weight_decay))(conv0)
-        pool0 = MaxPooling2D(pool_size=(2, 2))(conv0)
-
-        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv1', W_regularizer=l2(weight_decay))(pool0)
-        conv1 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block1_conv2', W_regularizer=l2(weight_decay))(conv1)
-        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-
-        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv1', W_regularizer=l2(weight_decay))(pool1)
-        conv2 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block2_conv2', W_regularizer=l2(weight_decay))(conv2)
-        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-
-        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv1', W_regularizer=l2(weight_decay))(pool2)
-        conv3 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block3_conv2', W_regularizer=l2(weight_decay))(conv3)
-        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
-
-        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv1', W_regularizer=l2(weight_decay))(pool3)
-        conv4 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block4_conv2', W_regularizer=l2(weight_decay))(conv4)
-        pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
-
-        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv1', W_regularizer=l2(weight_decay))(pool4)
-        conv5 = Convolution2D(512, 3, 3, activation='relu', border_mode='same', name='block5_conv2', W_regularizer=l2(weight_decay))(conv5)
-
-        up6 = self.merge_feature_maps(conv5, conv4)
-        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv1', W_regularizer=l2(weight_decay))(up6)
-        conv6 = Convolution2D(256, 3, 3, activation='relu', border_mode='same', name='block6_conv2', W_regularizer=l2(weight_decay))(conv6)
-
-        up7 = self.merge_feature_maps(conv6, conv3)
-        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv1', W_regularizer=l2(weight_decay))(up7)
-        conv7 = Convolution2D(128, 3, 3, activation='relu', border_mode='same', name='block7_conv2', W_regularizer=l2(weight_decay))(conv7)
-
-        up8 = self.merge_feature_maps(conv7, conv2)
-        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv1', W_regularizer=l2(weight_decay))(up8)
-        conv8 = Convolution2D(64, 3, 3, activation='relu', border_mode='same', name='block8_conv2', W_regularizer=l2(weight_decay))(conv8)
-
-        up9 = self.merge_feature_maps(conv8, conv1)
-        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv1', W_regularizer=l2(weight_decay))(up9)
-        conv9 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block9_conv2', W_regularizer=l2(weight_decay))(conv9)
-
-        up10 = self.merge_feature_maps(conv9, conv0)
-        conv10 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block10_conv1', W_regularizer=l2(weight_decay))(up10)
-        conv10 = Convolution2D(32, 3, 3, activation='relu', border_mode='same', name='block10_conv2', W_regularizer=l2(weight_decay))(conv10)
-
-        conv11 = Convolution2D(1, 1, 1, activation='sigmoid')(conv10)
-
-        model = Model(input=inputs, output=conv11)
 
         model.summary()
         return model
@@ -419,30 +362,83 @@ class ResNet50(ImageModel):
         x = Activation('relu')(x)
         x = MaxPooling2D((3, 3), strides=(2, 2))(x)
 
-        x = conv_block(3, [64, 64, 256], stage=2, block='a', weight_decay=weight_decay, strides=(1, 1), batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [64, 64, 256], stage=2, block='b', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [64, 64, 256], stage=2, block='c', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
+        x = conv_block(3, [64, 64, 256], stage=2, block='a')(x)
+        x = identity_block(3, [64, 64, 256], stage=2, block='b')(x)
+        x = identity_block(3, [64, 64, 256], stage=2, block='c')(x)
 
-        x = conv_block(3, [128, 128, 512], stage=3, block='a', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [128, 128, 512], stage=3, block='b', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [128, 128, 512], stage=3, block='c', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [128, 128, 512], stage=3, block='d', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
+        x = conv_block(3, [128, 128, 512], stage=3, block='a', strides=(2, 2))(x)
+        x = identity_block(3, [128, 128, 512], stage=3, block='b')(x)
+        x = identity_block(3, [128, 128, 512], stage=3, block='c')(x)
+        x = identity_block(3, [128, 128, 512], stage=3, block='d')(x)
 
-        x = conv_block(3, [256, 256, 1024], stage=4, block='a', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [256, 256, 1024], stage=4, block='b', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [256, 256, 1024], stage=4, block='c', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [256, 256, 1024], stage=4, block='d', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [256, 256, 1024], stage=4, block='e', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
-        x = identity_block(3, [256, 256, 1024], stage=4, block='f', weight_decay=weight_decay, batch_momentum=batch_momentum)(x)
+        x = conv_block(3, [256, 256, 1024], stage=4, block='a', strides=(2, 2))(x)
+        x = identity_block(3, [256, 256, 1024], stage=4, block='b')(x)
+        x = identity_block(3, [256, 256, 1024], stage=4, block='c')(x)
+        x = identity_block(3, [256, 256, 1024], stage=4, block='d')(x)
+        x = identity_block(3, [256, 256, 1024], stage=4, block='e')(x)
+        x = identity_block(3, [256, 256, 1024], stage=4, block='f')(x)
 
-        x = atrous_conv_block(3, [512, 512, 2048], stage=5, block='a', weight_decay=weight_decay, atrous_rate=(2, 2), batch_momentum=batch_momentum)(x)
-        x = atrous_identity_block(3, [512, 512, 2048], stage=5, block='b', weight_decay=weight_decay, atrous_rate=(2, 2), batch_momentum=batch_momentum)(x)
-        x = atrous_identity_block(3, [512, 512, 2048], stage=5, block='c', weight_decay=weight_decay, atrous_rate=(2, 2), batch_momentum=batch_momentum)(x)
+        x = atrous_conv_block(3, [512, 512, 2048], stage=5, block='a', atrous_rate=(2, 2))(x)
+        x = atrous_identity_block(3, [512, 512, 2048], stage=5, block='b', atrous_rate=(2, 2))(x)
+        x = atrous_identity_block(3, [512, 512, 2048], stage=5, block='c', atrous_rate=(2, 2))(x)
 
         x = Convolution2D(1, 1, 1, activation='sigmoid', border_mode='same', subsample=(1, 1), W_regularizer=l2(weight_decay))(x)
         x = BilinearUpSampling2D(target_size=tuple(self.input_shape[0:2]))(x)
 
         model = Model(inputs, x)
+
+        model.summary()
+        return model
+
+class UnetResNet(ImageModel):
+    def __init__(self, input_shape):
+        self.input_shape = input_shape
+        super(UnetResNet, self).__init__()
+
+    def get_model(self):
+        inputs = Input(self.input_shape)
+
+        weight_decay = 1e-4
+
+        x1 = Convolution2D(64, 7, 7, border_mode='same', name='conv1', W_regularizer=l2(weight_decay))(inputs)
+        x1 = BatchNormalization()(x1)
+        x1 = Activation('relu')(x1)
+        p1 = MaxPooling2D(strides=(2, 2))(x1)
+
+        x2 = conv_block(3, [64, 64, 64], stage=1, block='a')(p1)
+        x2 = identity_block(3, [64, 64, 64], stage=1, block='b')(x2)
+        p2 = MaxPooling2D(pool_size=(2, 2))(x2)
+
+        x3 = conv_block(3, [128, 128, 128], stage=2, block='a')(p2)
+        x3 = identity_block(3, [128, 128, 128], stage=2, block='b')(x3)
+        p3 = MaxPooling2D(pool_size=(2, 2))(x3)
+
+        x4 = conv_block(3, [256, 256, 256], stage=3, block='a')(p3)
+        x4 = identity_block(3, [256, 256, 256], stage=3, block='b')(x4)
+        p4 = MaxPooling2D(pool_size=(2, 2))(x4)
+
+        x5 = conv_block(3, [512, 512, 512], stage=4, block='a')(p4)
+        x5 = identity_block(3, [512, 512, 512], stage=4, block='b')(x5)
+
+        x6 = self.merge_feature_maps(x5, x4)
+        x6 = conv_block(3, [256, 256, 256], stage=6, block='a')(x6)
+        x6 = identity_block(3, [256, 256, 256], stage=6, block='b')(x6)
+
+        x7 = self.merge_feature_maps(x6, x3)
+        x7 = conv_block(3, [128, 128, 128], stage=7, block='a')(x7)
+        x7 = identity_block(3, [128, 128, 128], stage=7, block='b')(x7)
+
+        x8 = self.merge_feature_maps(x7, x2)
+        x8 = conv_block(3, [64, 64, 64], stage=8, block='a')(x8)
+        x8 = identity_block(3, [64, 64, 64], stage=8, block='b')(x8)
+
+        x9 = self.merge_feature_maps(x8, x1)
+        x9 = conv_block(3, [32, 32, 32], stage=9, block='a')(x9)
+        x9 = identity_block(3, [32, 32, 32], stage=9, block='b')(x9)
+
+        x10 = Convolution2D(1, 1, 1, activation='sigmoid')(x9)
+
+        model = Model(input=inputs, output=x10)
 
         model.summary()
         return model
@@ -458,74 +454,6 @@ class DenseNet(ImageModel):
         x = create_fcn_densenet(inputs, nb_layers_per_block=[4, 5, 7, 10, 12, 15])
 
         model = Model(inputs, x)
-
-        model.summary()
-        return model
-
-class unet_tumor(ImageModel):
-    def __init__(self, input_shape):
-        self.input_shape = input_shape
-        super(unet_tumor, self).__init__()
-
-    def get_model(self):
-        inputs = Input(self.input_shape)
-
-        weight_decay = 1e-4
-
-        conv1 = Convolution2D(32, 3, 3, border_mode='same', name='block1_conv1', W_regularizer=l2(weight_decay))(inputs)
-        conv1 = PReLU()(conv1)
-        conv1 = Convolution2D(32, 3, 3, border_mode='same', name='block1_conv2', W_regularizer=l2(weight_decay))(conv1)
-        conv1 = PReLU()(conv1)
-        pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-
-        conv2 = Convolution2D(64, 3, 3, border_mode='same', name='block2_conv1', W_regularizer=l2(weight_decay))(pool1)
-        conv2 = PReLU()(conv2)
-        conv2 = Convolution2D(64, 3, 3, border_mode='same', name='block2_conv2', W_regularizer=l2(weight_decay))(conv2)
-        conv2 = PReLU()(conv2)
-        pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
-
-        conv3 = Convolution2D(128, 3, 3, border_mode='same', name='block3_conv1', W_regularizer=l2(weight_decay))(pool2)
-        conv3 = PReLU()(conv3)
-        conv3 = Convolution2D(128, 3, 3, border_mode='same', name='block3_conv2', W_regularizer=l2(weight_decay))(conv3)
-        conv3 = PReLU()(conv3)
-        pool3 = MaxPooling2D(pool_size=(2, 2))(conv3)
-
-        conv4 = Convolution2D(256, 3, 3, border_mode='same', name='block4_conv1', W_regularizer=l2(weight_decay))(pool3)
-        conv4 = PReLU()(conv4)
-        conv4 = Convolution2D(256, 3, 3, border_mode='same', name='block4_conv2', W_regularizer=l2(weight_decay))(conv4)
-        conv4 = PReLU()(conv4)
-        pool4 = MaxPooling2D(pool_size=(2, 2))(conv4)
-
-        conv5 = Convolution2D(512, 3, 3, border_mode='same', name='block5_conv1', W_regularizer=l2(weight_decay))(pool4)
-        conv5 = PReLU()(conv5)
-        conv5 = Convolution2D(512, 3, 3, border_mode='same', name='block5_conv2', W_regularizer=l2(weight_decay))(conv5)
-        conv5 = PReLU()(conv5)
-
-        up6 = self.merge_feature_maps(conv5, conv4)
-        conv6 = Convolution2D(256, 3, 3, border_mode='same', name='block6_conv1', W_regularizer=l2(weight_decay))(up6)
-        conv6 = PReLU()(conv6)
-        conv6 = Convolution2D(256, 3, 3, border_mode='same', name='block6_conv2', W_regularizer=l2(weight_decay))(conv6)
-        conv6 = PReLU()(conv6)
-
-        up7 = self.merge_feature_maps(conv6, conv3)
-        conv7 = Convolution2D(128, 3, 3, border_mode='same', name='block7_conv1', W_regularizer=l2(weight_decay))(up7)
-        conv7 = Convolution2D(128, 3, 3, border_mode='same', name='block7_conv2', W_regularizer=l2(weight_decay))(conv7)
-
-        up8 = self.merge_feature_maps(conv7, conv2)
-        conv8 = Convolution2D(64, 3, 3, border_mode='same', name='block8_conv1', W_regularizer=l2(weight_decay))(up8)
-        conv8 = PReLU()(conv8)
-        conv8 = Convolution2D(64, 3, 3, border_mode='same', name='block8_conv2', W_regularizer=l2(weight_decay))(conv8)
-        conv8 = PReLU()(conv8)
-
-        up9 = self.merge_feature_maps(conv8, conv1)
-        conv9 = Convolution2D(32, 3, 3, border_mode='same', name='block9_conv1', W_regularizer=l2(weight_decay))(up9)
-        conv9 = PReLU()(conv9)
-        conv9 = Convolution2D(32, 3, 3, border_mode='same', name='block9_conv2', W_regularizer=l2(weight_decay))(conv9)
-        conv9 = PReLU()(conv9)
-
-        conv10 = Convolution2D(1, 1, 1, activation='sigmoid')(conv9)
-
-        model = Model(input=inputs, output=conv10)
 
         model.summary()
         return model

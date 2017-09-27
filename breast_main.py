@@ -18,26 +18,26 @@ def run_unet_gen(istrain=False):
                             modelcheckpoint='cache/breast/model/unet_gen.hdf5',
                             is_datagen=True)
 
-def run_unet_reg_gen_448_448(istrain=False):
+def run_unet_gen_448_448(istrain=False):
     return Segmentation.run_breast(istrain=istrain,
-                            model_name='unet_reg',
+                            model_name='unet_standard',
                             modelcheckpoint='cache/breast/model/unet_gen_448_448.hdf5',
-                            batch_size=16, nb_epoch=500, is_datagen=True,
+                            batch_size=4, nb_epoch=500, is_datagen=True,
                             images_npy='cache/breast/datasets/images_pad_crop_448_448_tf.npy',
                             masks_npy='cache/breast/datasets/masks_pad_crop_448_448_tf.npy')
 
-def run_unet_reg_gen_448_448_echo(istrain=False):
+def run_unet_gen_448_448_echo(istrain=False):
     return Segmentation.run_breast(istrain=istrain,
-                            model_name='unet_reg',
+                            model_name='unet_standard',
                             modelcheckpoint='cache/breast/model/unet_gen_448_448_echo.hdf5',
                             batch_size=16,
                             is_datagen=True,
                             images_npy='cache/breast/datasets/images_echo_448_448_tf.npy',
                             masks_npy='cache/breast/datasets/masks_echo_448_448_tf.npy')
 
-def run_unet_reg_gen_448_448_padecho(istrain=False):
+def run_unet_gen_448_448_padecho(istrain=False):
     return Segmentation.run_breast(istrain=istrain,
-                            model_name='unet_reg',
+                            model_name='unet_standard',
                             modelcheckpoint='cache/breast/model/unet_gen_448_448_padecho.hdf5',
                             batch_size=16,
                             is_datagen=True,
@@ -51,13 +51,13 @@ if __name__ == '__main__':
 
     # (X_test, y_test, predicts) = run_unet_gen(istrain=False)  # dice = 86.6
 
-    (X_test, y_test, predicts) = run_unet_reg_gen_448_448(istrain=True)  # dice = 86.4
+    (X_test, y_test, predicts) = run_unet_gen_448_448(istrain=True)  # dice =
 
-    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_echo(istrain=False)  # dice = 80.25
+    # (X_test, y_test, predicts) = run_unet_gen_448_448_echo(istrain=False)  # dice = 80.25
 
-    # (X_test, y_test, predicts) = run_unet_reg_gen_448_448_padecho(istrain=False)  # dice = 80.1
+    # (X_test, y_test, predicts) = run_unet_gen_448_448_padecho(istrain=False)  # dice = 80.1
 
-    # print("total process time: %s" % cvtSecond2HMS(time.clock() - ts))
+    print("total process time: %s" % cvtSecond2HMS(time.clock() - ts))
     #
     # for i in range(0, 1):
     #     showImages(X_test[i, :, :, 0], y_test[i, :, :, 0], predicts[i, :, :, 0])
