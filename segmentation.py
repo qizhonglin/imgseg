@@ -93,7 +93,7 @@ class Segmentation(object):
 
     @staticmethod
     def run_skin(istrain, model_name, modelcheckpoint, model_pretrain=None,
-            batch_size=32, nb_epoch=500, is_datagen=False):
+            batch_size=32, nb_epoch=200, is_datagen=False):
         print('-' * 30)
         print('Loading data...')
         print('-' * 30)

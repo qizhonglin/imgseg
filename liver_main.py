@@ -16,6 +16,15 @@ def run_unet(istrain=False, tissue='liver', batch_size=8, model_pretrain='cache/
                                   model_pretrain=model_pretrain,
                                   isliver=True if tissue=='liver' else False)
 
+def run_UnetSimpleResNet(istrain=False, tissue='liver', batch_size=32, model_pretrain=None):
+    return Segmentation.run_liver(istrain=istrain,
+                            model_name='UnetSimpleResNet',
+                                  modelcheckpoint='cache/{0}/model/UnetSimpleResNet.hdf5'.format(tissue),
+                                  batch_size=batch_size,
+                                  nb_epoch=50,
+                                  model_pretrain=model_pretrain,
+                                  isliver=True if tissue == 'liver' else False)
+
 def run_unet_25D(istrain=False):
     return SegmentationBatch.run_liver(istrain=istrain,
                                        model_name='unet',
@@ -47,10 +56,11 @@ if __name__ == '__main__':
     ts = time.clock()
 
     # (X_test, y_test, predicts) = run_unet(istrain=True)       # dice =
+    (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=True)     # dice =
     # (X_test, y_test, predicts) = run_unet_25D(istrain=True)  # dice = 90.5
     # (X_test, y_test, predicts) = run_unet_standard_25D(istrain=False)  # dice = 88.7
 
-    (X_test, y_test, predicts) = run_unet(istrain=True, tissue='tumor', batch_size=32)  # dice =
+    # (X_test, y_test, predicts) = run_unet(istrain=True, tissue='tumor', batch_size=32)  # dice =
 
 
     print("total process time: ", cvtSecond2HMS(time.clock() - ts))

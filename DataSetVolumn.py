@@ -10,7 +10,7 @@ from viewer import viewSequence
 
 class DataSetVolumn(object):
     def __init__(self, dtype='float32',
-                 data_dir='/home/philips/.keras/datasets/LiTS/liver', image_size=(512, 512)):
+                 data_dir='/home/philips/.keras/datasets/LiTS/liver', image_size=(256, 256)):
         self.image_size = image_size
         self.dtype = dtype
 
@@ -89,7 +89,7 @@ class DataSetVolumn(object):
 
 #-------------------load all data in memory---------------
     def load_traindata(self):
-        num = len(self.nums_slice)
+        num = 3#len(self.nums_slice)
         total = np.sum(self.nums_slice[:num])
         self.images = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)
         self.masks = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)

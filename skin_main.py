@@ -42,6 +42,12 @@ def run_DenseNet(istrain=False):
                             modelcheckpoint='cache/skin/model/densenet.hdf5',
                             batch_size=4)
 
+def run_UnetSimpleResNet(istrain=False):
+    return Segmentation.run_skin(istrain=istrain,
+                            model_name='UnetSimpleResNet',
+                            modelcheckpoint='cache/skin/model/UnetSimpleResNet.hdf5',
+                            batch_size=32)
+
 def run_unet_gen(istrain=False):
     return Segmentation.run_skin(istrain=istrain,
                             model_name='unet',
@@ -63,13 +69,12 @@ if __name__ == '__main__':
     # (X_test, y_test, predicts) = run_unet(istrain=False)                  # dice = 86.9
     # (X_test, y_test, predicts) = run_FCN(istrain=True)                    # dice = 71.4
     # (X_test, y_test, predicts) = run_ResNet50(istrain=False)              # dice = 80
-    (X_test, y_test, predicts) = run_unet_resnet(istrain=True)              # dice =
-    # (X_test, y_test, predicts) = run_DenseNet(istrain=True)               # dice = 82.3
+    # (X_test, y_test, predicts) = run_unet_resnet(istrain=True)            # dice = 85.3
+    # (X_test, y_test, predicts) = run_DenseNet(istrain=False)               # dice = 86.1
+    (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=True)         # dice =
 
-    # unet + data augment
-    # (X_test, y_test, predicts) = run_unet_gen(istrain=True)           # dice= 86.8
-
-    # (X_test, y_test, predicts) = run_unet_standard_gen(istrain=True)    # dice = 87.4
+    # unet standard + data augment
+    # (X_test, y_test, predicts) = run_unet_standard_gen(istrain=True)    # dice =
 
     print("total process time: %s" % cvtSecond2HMS(time.clock() - ts))
 
