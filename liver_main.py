@@ -7,23 +7,26 @@ seed = 9001
 random.seed(seed)
 
 
-def run_unet(istrain=False, tissue='liver', batch_size=8, model_pretrain='cache/liver/model/unet.hdf5'):
+def run_unet(istrain=False, tissue='liver', batch_size=8, image_size=(512, 512), model_pretrain=None):
     return Segmentation.run_liver(istrain=istrain,
                                   model_name='unet',
-                                  modelcheckpoint='cache/{0}/model/unet.hdf5'.format(tissue),
+                                  modelcheckpoint='cache/{0}/model/unet_{1}.hdf5'.format(tissue, image_size[0]),
                                   batch_size=batch_size,
                                   nb_epoch=50,
                                   model_pretrain=model_pretrain,
-                                  isliver=True if tissue=='liver' else False)
+                                  isliver=True if tissue=='liver' else False,
+                                  image_size=image_size)
 
-def run_UnetSimpleResNet(istrain=False, tissue='liver', batch_size=32, model_pretrain=None):
+def run_UnetSimpleResNet(istrain=False, tissue='liver', batch_size=4, image_size=(512, 512), model_pretrain=None, is_datagen=False):
     return Segmentation.run_liver(istrain=istrain,
-                            model_name='UnetSimpleResNet',
-                                  modelcheckpoint='cache/{0}/model/UnetSimpleResNet.hdf5'.format(tissue),
+                                  model_name='UnetSimpleResNet',
+                                  modelcheckpoint='cache/{0}/model/UnetSimpleResNet_{1}.hdf5'.format(tissue, image_size[0]),
                                   batch_size=batch_size,
                                   nb_epoch=50,
                                   model_pretrain=model_pretrain,
-                                  isliver=True if tissue == 'liver' else False)
+                                  isliver=True if tissue == 'liver' else False,
+                                  image_size=image_size,
+                                  is_datagen=is_datagen)
 
 def run_unet_25D(istrain=False):
     return SegmentationBatch.run_liver(istrain=istrain,
@@ -55,12 +58,14 @@ if __name__ == '__main__':
 
     ts = time.clock()
 
-    # (X_test, y_test, predicts) = run_unet(istrain=True)       # dice =
+    # (X_test, y_test, predicts) = run_unet(istrain=True)       # dice = 93
     (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=True)     # dice =
     # (X_test, y_test, predicts) = run_unet_25D(istrain=True)  # dice = 90.5
     # (X_test, y_test, predicts) = run_unet_standard_25D(istrain=False)  # dice = 88.7
 
     # (X_test, y_test, predicts) = run_unet(istrain=True, tissue='tumor', batch_size=32)  # dice =
+    (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=True, tissue='tumor', batch_size=16, image_size=(256, 256),
+                                                      model_pretrain='cache/liver/model/UnetSimpleResNet_512.hdf5', is_datagen=True)  # dice =
 
 
     print("total process time: ", cvtSecond2HMS(time.clock() - ts))

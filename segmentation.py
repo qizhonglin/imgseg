@@ -143,9 +143,9 @@ class Segmentation(object):
 
     @staticmethod
     def run_liver(istrain, model_name, modelcheckpoint, model_pretrain=None,
-            batch_size=1, nb_epoch=500, is_datagen=False, isliver=True):
+            batch_size=1, nb_epoch=500, is_datagen=False, isliver=True, image_size=(512, 512)):
 
-        reader = DataSetVolumn() if isliver else TumorVolumn()
+        reader = DataSetVolumn(image_size=image_size) if isliver else TumorVolumn(image_size=image_size)
         seg = Segmentation(model_name, modelcheckpoint)
 
         if istrain:

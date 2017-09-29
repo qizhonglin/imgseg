@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # (X_test, y_test, predicts) = run_ResNet50(istrain=False)              # dice = 80
     # (X_test, y_test, predicts) = run_unet_resnet(istrain=True)            # dice = 85.3
     # (X_test, y_test, predicts) = run_DenseNet(istrain=False)               # dice = 86.1
-    (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=True)         # dice =
+    (X_test, y_test, predicts) = run_UnetSimpleResNet(istrain=False)         # dice = 85.8
 
     # unet standard + data augment
     # (X_test, y_test, predicts) = run_unet_standard_gen(istrain=True)    # dice =

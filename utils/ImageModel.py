@@ -135,21 +135,21 @@ class ImageModel(object):
         output = Convolution2D(1, 1, 1, activation='sigmoid')(x)
         return output
 
-    def create_unetresnet(self, inputs, nb_filters=[32, 64, 128, 256, 512], weight_decay=1e-4):
+    def create_unetresnet(self, inputs, nb_filters=[64, 128, 256, 512, 512], repeats=[2, 2, 3, 3, 3], weight_decay=1e-4):
         skips = []
         x = inputs
 
         # initial layer
-        for j in range(2):
+        for j in range(repeats[0]):
             name = 'block{0}_conv{1}'.format(0, j)
             x = Convolution2D(nb_filters[0], 3, 3, activation='relu', border_mode='same', name=name, W_regularizer=l2(weight_decay))(x)
         skips.append(x)
 
         # downsampling way
-        for i, nb_filter in enumerate(nb_filters[1:]):
+        for i, (nb_filter, repeat) in enumerate(zip(nb_filters[1:], repeats[1:])):
             x = MaxPooling2D(pool_size=(2, 2))(x)
             shortcut = Convolution2D(nb_filter, 1, 1, name='block{0}_conv{1}'.format(i+1, 0), W_regularizer=l2(weight_decay))(x)
-            for j in range(2):
+            for j in range(repeat):
                 name = 'block{0}_conv{1}'.format(i+1, j+1)
                 x = Convolution2D(nb_filter, 3, 3, activation='relu', border_mode='same', name=name, W_regularizer=l2(weight_decay))(x)
             x = merge([x, shortcut], mode='sum')
@@ -159,10 +159,11 @@ class ImageModel(object):
         # upsampling way
         skips = skips[::-1]
         nb_filters_up = nb_filters[:-1][::-1]
-        for i, nb_filter in enumerate(nb_filters_up):
+        repeats_up = repeats[:-1][::-1]
+        for i, (nb_filter, repeat) in enumerate(zip(nb_filters_up, repeats_up)):
             x = self.merge_feature_maps(x, skips[i])
             shortcut = Convolution2D(nb_filter, 1, 1, name='block{0}_conv{1}'.format(i + len(nb_filters), 0), W_regularizer=l2(weight_decay))(x)
-            for j in range(2):
+            for j in range(repeat):
                 name = 'block{0}_conv{1}'.format(i + len(nb_filters), j+1)
                 x = Convolution2D(nb_filter, 3, 3, activation='relu', border_mode='same', name=name, W_regularizer=l2(weight_decay))(x)
             x = merge([x, shortcut], mode='sum')

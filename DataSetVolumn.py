@@ -10,7 +10,7 @@ from viewer import viewSequence
 
 class DataSetVolumn(object):
     def __init__(self, dtype='float32',
-                 data_dir='/home/philips/.keras/datasets/LiTS/liver', image_size=(256, 256)):
+                 data_dir='/home/philips/.keras/datasets/LiTS/liver', image_size=(512, 512)):
         self.image_size = image_size
         self.dtype = dtype
 
@@ -89,7 +89,7 @@ class DataSetVolumn(object):
 
 #-------------------load all data in memory---------------
     def load_traindata(self):
-        num = 3#len(self.nums_slice)
+        num = len(self.nums_slice)
         total = np.sum(self.nums_slice[:num])
         self.images = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)
         self.masks = np.zeros((total, self.image_size[0], self.image_size[1], 1), dtype=self.dtype)
@@ -261,12 +261,12 @@ class DataSetVolumn(object):
 
 class TumorVolumn(DataSetVolumn):
     def __init__(self, dtype='float32',
-                 data_dir='/home/philips/.keras/datasets/LiTS/tumor', image_size=(256, 256)):
+                 data_dir='/home/philips/.keras/datasets/LiTS/tumor', image_size=(512, 512)):
         super(TumorVolumn, self).__init__(dtype, data_dir, image_size)
 
     def preprocess(self, images, masks):
         # images = threshold(images, np.min(images), np.max(images))
-        images = threshold(images, -200, 200)
+        images = threshold(images, -100, 400)
         # images = norm_images(images)
         # images = equalizeHist(images)
         # images = threshold(images, np.min(images), np.max(images))
@@ -303,9 +303,9 @@ if __name__ == '__main__':
     # for image_file, data in test_data.iteritems():
     #     print('{0} has {1} slices and {2} masks'.format(image_file, data[0].shape, data[1].shape))
 
-    # images_onecase, masks_onecase = DataSetVolumn().validation_data()
-    images_onecase, masks_onecase = TumorVolumn().validation_data()
-    images_onecase, masks_onecase = remove_bg(images_onecase, masks_onecase)
+    images_onecase, masks_onecase = DataSetVolumn().validation_data()
+    # images_onecase, masks_onecase = TumorVolumn().validation_data()
+    # images_onecase, masks_onecase = remove_bg(images_onecase, masks_onecase)
 
     # show_image_mask(images_onecase, masks_onecase)
     viewSequence(images_onecase)
